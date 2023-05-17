@@ -34,7 +34,7 @@ services:
       INFLUXDB_BUCKET_ARCHIVE:
       # required
       INFLUXDB_TOKEN:
-      
+
   hotrod:
     image: jaegertracing/example-hotrod:1.41.0
     stop_grace_period: 1s
@@ -60,10 +60,6 @@ services:
     ports:
       - 3000:3000
     environment:
-      - INFLUX_HOST=${INFLUXDB_ADDR}
-      - INFLUX_TOKEN=${INFLUXDB_TOKEN}
-      - INFLUX_ORG=${INFLUXDB_ORG}
-      - INFLUX_BUCKET=${INFLUXDB_BUCKET}
       - GF_INSTALL_PLUGINS=influxdata-flightsql-datasource
     volumes: 
       - grafana:/var/lib/grafana/
