@@ -30,8 +30,5 @@ service:
   pipelines:
     traces:
       receivers: [otlp, jaeger]
-      exporters: [influxdb, spanmetrics, servicegraph]
-
-    metrics:
-      receivers: [spanmetrics, servicegraph]
+      processors: [spanmetrics]
       exporters: [influxdb]
