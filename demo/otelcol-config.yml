@@ -16,7 +16,6 @@ exporters:
     token: ${INFLUXDB_TOKEN}
     metrics_schema: otel-v1
 
-
 service:
   telemetry:
     logs:
