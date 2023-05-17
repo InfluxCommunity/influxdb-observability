@@ -26,8 +26,15 @@ services:
       LOG_LEVEL: debug
       LISTEN_ADDR: :17271
       INFLUXDB_TIMEOUT: 30s
-    env_file:
-    - .env
+            # required: hostname or hostname:port
+      INFLUXDB_ADDR:
+      # required: bucket name
+      INFLUXDB_BUCKET: otel
+      # optional: bucket name for archived traces
+      INFLUXDB_BUCKET_ARCHIVE:
+      # required
+      INFLUXDB_TOKEN:
+      
   hotrod:
     image: jaegertracing/example-hotrod:1.41.0
     stop_grace_period: 1s
@@ -47,8 +54,6 @@ services:
     stop_grace_period: 10s
     volumes:
     - ./demo/otelcol-config.yml:/config.yml:ro
-    env_file:
-    - .env
 
   grafana:
     image: grafana/grafana:latest
@@ -61,8 +66,6 @@ services:
       - INFLUX_BUCKET=${INFLUXDB_BUCKET}
       - GF_INSTALL_PLUGINS=influxdata-flightsql-datasource
     volumes: 
-      - ./demo/grafana/datasources:/etc/grafana/provisioning/datasources
-      - ./demo/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - grafana:/var/lib/grafana/
     restart: always
 volumes:
