@@ -12,8 +12,9 @@ receivers:
 exporters:
   influxdb:
     endpoint: 
-    bucket: 
+    bucket: otel
     token: 
+    metrics_schema: otel-v1
 
 
 service:
@@ -25,5 +26,4 @@ service:
   pipelines:
     traces:
       receivers: [otlp, jaeger]
-      processors: [spanmetrics]
       exporters: [influxdb]
