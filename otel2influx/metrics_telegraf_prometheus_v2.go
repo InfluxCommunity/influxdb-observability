@@ -1,6 +1,7 @@
 package otel2influx
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -94,7 +95,7 @@ func (c *metricWriterTelegrafPrometheusV2) enqueueGauge(resource pcommon.Resourc
 	return nil
 }
 
-func (c *metricWriterTelegrafPrometheusV2) enqueueGaugeFromSum(resource pcommon.Resource, instrumentationLibrary pcommon.InstrumentationScope, measurement string, sum pmetric.Sum, batch InfluxWriterBatch) error {
+func (c *metricWriterTelegrafPrometheusV2) writeGaugeFromSum(ctx context.Context, resource pcommon.Resource, instrumentationLibrary pcommon.InstrumentationScope, measurement string, sum pmetric.Sum, batch InfluxWriterBatch) error {
 
 	for i := 0; i < sum.DataPoints().Len(); i++ {
 		dataPoint := sum.DataPoints().At(i)
@@ -122,7 +123,8 @@ func (c *metricWriterTelegrafPrometheusV2) enqueueGaugeFromSum(resource pcommon.
 	return nil
 }
 
-func (c *metricWriterTelegrafPrometheusV2) enqueueSum(resource pcommon.Resource, instrumentationLibrary pcommon.InstrumentationScope, measurement string, sum pmetric.Sum, batch InfluxWriterBatch) error {
+func (c *metricWriterTelegrafPrometheusV2) writeSum(ctx context.Context, resource pcommon.Resource, instrumentationLibrary pcommon.InstrumentationScope, measurement string, sum pmetric.Sum, batch InfluxWriterBatch) error {
+
 	for i := 0; i < sum.DataPoints().Len(); i++ {
 		dataPoint := sum.DataPoints().At(i)
 		tags, fields, ts, err := c.initMetricTagsAndTimestamp(resource, instrumentationLibrary, dataPoint)
@@ -149,7 +151,8 @@ func (c *metricWriterTelegrafPrometheusV2) enqueueSum(resource pcommon.Resource,
 	return nil
 }
 
-func (c *metricWriterTelegrafPrometheusV2) enqueueHistogram(resource pcommon.Resource, instrumentationLibrary pcommon.InstrumentationScope, measurement string, histogram pmetric.Histogram, batch InfluxWriterBatch) error {
+func (c *metricWriterTelegrafPrometheusV2) writeHistogram(ctx context.Context, resource pcommon.Resource, instrumentationLibrary pcommon.InstrumentationScope, measurement string, histogram pmetric.Histogram, batch InfluxWriterBatch) error {
+
 	for i := 0; i < histogram.DataPoints().Len(); i++ {
 		dataPoint := histogram.DataPoints().At(i)
 		tags, fields, ts, err := c.initMetricTagsAndTimestamp(resource, instrumentationLibrary, dataPoint)
