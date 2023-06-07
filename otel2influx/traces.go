@@ -6,36 +6,74 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	"go.opentelemetry.io/collector/consumer/consumererror"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	semconv "go.opentelemetry.io/collector/semconv/v1.16.0"
 	"go.uber.org/multierr"
+	"golang.org/x/exp/maps"
 
 	"github.com/influxdata/influxdb-observability/common"
 )
 
+type OtelTracesToLineProtocolConfig struct {
+	Logger common.Logger
+	Writer InfluxWriter
+	// SpanDimensions are span attributes to be used as line protocol tags.
+	// These are always included as tags:
+	// - trace ID
+	// - span ID
+	// The default values are strongly recommended for use with Jaeger:
+	// - service.name
+	// - span.name
+	// Other common attributes can be found here:
+	// - https://github.com/open-telemetry/opentelemetry-collector/tree/main/semconv
+	SpanDimensions []string
+}
+
+func DefaultOtelTracesToLineProtocolConfig() *OtelTracesToLineProtocolConfig {
+	return &OtelTracesToLineProtocolConfig{
+		Logger: new(common.NoopLogger),
+		Writer: new(NoopInfluxWriter),
+		SpanDimensions: []string{
+			semconv.AttributeServiceName,
+			common.AttributeSpanName,
+		},
+	}
+}
+
 type OtelTracesToLineProtocol struct {
-	logger common.Logger
-	w      InfluxWriter
+	logger       common.Logger
+	influxWriter InfluxWriter
+
+	spanDimensions map[string]struct{}
 }
 
-func NewOtelTracesToLineProtocol(logger common.Logger, w InfluxWriter) (*OtelTracesToLineProtocol, error) {
+func NewOtelTracesToLineProtocol(config *OtelTracesToLineProtocolConfig) (*OtelTracesToLineProtocol, error) {
+	spanDimensions := make(map[string]struct{}, len(config.SpanDimensions))
+	{
+		duplicateDimensions := make(map[string]struct{})
+		for _, k := range config.SpanDimensions {
+			if _, found := spanDimensions[k]; found {
+				duplicateDimensions[k] = struct{}{}
+			} else {
+				spanDimensions[k] = struct{}{}
+			}
+		}
+		if len(duplicateDimensions) > 0 {
+			return nil, fmt.Errorf("duplicate dimension(s) configured: %s",
+				strings.Join(maps.Keys(duplicateDimensions), ","))
+		}
+	}
+
 	return &OtelTracesToLineProtocol{
-		logger: logger,
-		w:      w,
+		logger:         config.Logger,
+		influxWriter:   config.Writer,
+		spanDimensions: spanDimensions,
 	}, nil
-}
-
-func (c *OtelTracesToLineProtocol) Start(ctx context.Context, host component.Host) error {
-	// TODO remove this method
-	return nil
-}
-
-func (c *OtelTracesToLineProtocol) Shutdown(ctx context.Context) error {
-	// TODO remove this method
-	return nil
 }
 
 func (c *OtelTracesToLineProtocol) WriteTraces(ctx context.Context, td ptrace.Traces) error {
@@ -46,8 +84,8 @@ func (c *OtelTracesToLineProtocol) WriteTraces(ctx context.Context, td ptrace.Tr
 			scopeSpans := resourceSpans.ScopeSpans().At(j)
 			for k := 0; k < scopeSpans.Spans().Len(); k++ {
 				span := scopeSpans.Spans().At(k)
-				if err := c.writeSpan(ctx, span, scopeFields, batch); err != nil {
-					return fmt.Errorf("failed to convert OTLP span to line protocol: %w", err)
+				if err := c.enqueueSpan(ctx, span, scopeSpans.Scope().Attributes(), resourceSpans.Resource().Attributes(), batch); err != nil {
+					return consumererror.NewPermanent(fmt.Errorf("failed to convert OTLP span to line protocol: %w", err))
 				}
 			}
 		}
