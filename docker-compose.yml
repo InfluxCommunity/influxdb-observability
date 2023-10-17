@@ -33,7 +33,7 @@ services:
       # optional: bucket name for archived traces
       INFLUXDB_BUCKET_ARCHIVE:
       # required
-      INFLUXDB_TOKEN: CAFzHCRxTE2_pvg3wrRZvWak24AQ6avYIdTrki8pljufGbiMv2WgJvNx24mOb6yoPptvvVOydSlz-LbjfsyvGA==
+      INFLUXDB_TOKEN: 
 
   hotrod:
     image: jaegertracing/example-hotrod:1.41.0
