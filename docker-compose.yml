@@ -63,6 +63,7 @@ services:
       - GF_INSTALL_PLUGINS=influxdata-flightsql-datasource
     volumes: 
       - grafana:/var/lib/grafana/
+      - ./demo/grafana/datasources:/etc/grafana/provisioning/datasources
     restart: always
 volumes:
   grafana:
