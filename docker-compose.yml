@@ -27,13 +27,13 @@ services:
       LISTEN_ADDR: :17271
       INFLUXDB_TIMEOUT: 30s
             # required: hostname or hostname:port
-      INFLUXDB_ADDR:
+      INFLUXDB_ADDR: eu-central-1-1.aws.cloud2.influxdata.com
       # required: bucket name
       INFLUXDB_BUCKET: otel
       # optional: bucket name for archived traces
       INFLUXDB_BUCKET_ARCHIVE:
       # required
-      INFLUXDB_TOKEN:
+      INFLUXDB_TOKEN: CAFzHCRxTE2_pvg3wrRZvWak24AQ6avYIdTrki8pljufGbiMv2WgJvNx24mOb6yoPptvvVOydSlz-LbjfsyvGA==
 
   hotrod:
     image: jaegertracing/example-hotrod:1.41.0
@@ -49,14 +49,14 @@ services:
     command: ["all", "-m", "prometheus"]
 
   otelcol-influxdb:
-    image: jacobmarble/otelcol-influxdb:latest
+    image: otel/opentelemetry-collector-contrib:latest
     command: [ "--config", "/config.yml" ]
     stop_grace_period: 10s
     volumes:
     - ./demo/otelcol-config.yml:/config.yml:ro
 
   grafana:
-    image: grafana/grafana:latest
+    image: jaymand13/grafana-oss:sql
     ports:
       - 3000:3000
     environment:

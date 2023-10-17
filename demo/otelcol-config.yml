@@ -1,20 +1,8 @@
 receivers:
-  jaeger:
-    protocols:
-      thrift_compact:
-      thrift_http:
-
-  otlp:
-    protocols:
-      grpc:
-      http:
 
 exporters:
-  influxdb:
-    endpoint: 
-    bucket: otel
-    token: 
-    metrics_schema: otel-v1
+  
+connectors:
 
 
 service:
@@ -25,5 +13,10 @@ service:
 
   pipelines:
     traces:
-      receivers: [otlp, jaeger]
-      exporters: [influxdb]
+
+    metrics:
+ 
+    logs:
+
+
+    
