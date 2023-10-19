@@ -61,8 +61,10 @@ services:
       - 3000:3000
     environment:
       - GF_INSTALL_PLUGINS=influxdata-flightsql-datasource
+      - GF_PATHS_CONFIG=/etc/grafana/grafana.ini
     volumes: 
       - grafana:/var/lib/grafana/
+      - "./demo/grafana/defaults.ini:/etc/grafana/grafana.ini"
       - ./demo/grafana/datasources:/etc/grafana/provisioning/datasources
     restart: always
 volumes:
