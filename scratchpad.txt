@@ -1,0 +1,98 @@
+###### InfluxDB Observability Workshop ######
+#############################################
+
+
+#### Enviroment Setup ####
+
+# Step 1
+docker compose pull
+
+# Step 2
+InfluxDB Cloud Token: 
+
+#### OpenTelemetry Collector ####
+
+# Step 3
+receivers:
+  jaeger:
+    protocols:
+      thrift_compact:
+      thrift_http:
+
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+# Step 4
+exporters:
+  influxdb:
+    endpoint: <INSERT URL>
+    bucket: < INSERT BUCKET NAME>
+    token: <INSERT HERE>
+    metrics_schema: otel-v1
+
+# Step 5
+connectors:
+  spanmetrics:
+    aggregation_temporality: "AGGREGATION_TEMPORALITY_DELTA"
+  servicegraph:
+
+# Step 6
+ pipelines:
+    traces:
+      receivers: [otlp, jaeger]
+      exporters: [influxdb, spanmetrics, servicegraph]
+
+    metrics:
+      receivers: [spanmetrics, servicegraph]
+      exporters: [influxdb]
+
+#### Jaeger ####
+
+# Step 7
+ jaeger-influxdb:
+    image: jacobmarble/jaeger-influxdb:latest
+    stop_grace_period: 10s
+    environment:
+      LOG_LEVEL: debug
+      LISTEN_ADDR: :17271
+      INFLUXDB_TIMEOUT: 30s
+       # required: hostname or hostname:port
+      INFLUXDB_ADDR: eu-central-1-1.aws.cloud2.influxdata.com
+      # required: bucket name
+      INFLUXDB_BUCKET: otel
+      # optional: bucket name for archived traces
+      INFLUXDB_BUCKET_ARCHIVE:
+      # required
+      INFLUXDB_TOKEN: <INSERT Token>
+
+#### Demo Spin Up ####
+
+# Step 8
+docker compose up -d
+
+# Step 9
+http://localhost:8080
+
+# Step 10
+http://localhost:16686
+
+
+#### Grafana ####
+
+# Step 11
+http://localhost:3000
+
+
+# Step 12
+SELECT distinct("service.name") FROM iox.spans WHERE time >= $__timeFrom AND time <= $__timeTo
+
+# Step 13
+/d/${__dashboard.uid}?var-service=${__value.raw}&from=${__url_time_from}&to=${__url_time_to}
+
+# Step 14
+SELECT "duration_nano"/ 1000000 as "duration", "trace_id", time FROM iox.spans WHERE time >= $__timeFrom AND time <= $__timeTo AND "service.name" == ('$service') order by time
+
+# Step 15
+/d/${__dashboard.uid}?var-traceid=${__value.raw}&var-service=${service}&from=${__url_time_from}&to=${__url_time_to}
